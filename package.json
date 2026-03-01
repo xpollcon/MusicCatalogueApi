@@ -1,0 +1,22 @@
+{
+  "name": "music-catalogue-api",
+  "private": true,
+  "dependencies": {
+    "@aws-appsync/utils": "^1.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.1",
+    "mocha": "^10.2.0",
+    "chai": "^4.3.7",
+    "@types/node": "^20.4.2",
+    "@types/chai": "^4.3.4",
+    "@types/mocha": "^10.0.1"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "predeploy": "npm run build",
+    "test": "mocha -r ts-node/register 'greeter/tests/unit/**/*.ts'"
+  }
+}

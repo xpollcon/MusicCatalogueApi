@@ -1,0 +1,115 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  music-catalogue-api
+  Sample SAM Template for music-catalogue-api
+Resources:
+  PostsTable:
+    Type: AWS::Serverless::SimpleTable
+
+  MusicCatalogue:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: ./dist/greeter/
+      Handler: app.lambdaHandler
+      Runtime: nodejs24.x
+      Architectures:
+      - x86_64
+
+  MusicCatalogueGraphQLApi:
+    Type: AWS::Serverless::GraphQLApi
+    Properties:
+      SchemaUri: ./gql/schema.graphql
+      Auth:
+        Type: API_KEY
+      ApiKeys:
+        MyApiKey:
+          Description: my api key
+      DataSources:
+        DynamoDb:
+          Posts:
+            TableName: !Ref PostsTable
+            TableArn: !GetAtt PostsTable.Arn
+        Lambda:
+          MusicCatalogue:
+            FunctionArn: !GetAtt MusicCatalogue.Arn
+      Functions:
+        preprocessPostItem:
+          Runtime:
+            Name: APPSYNC_JS
+            Version: 1.0.0
+          DataSource: NONE
+          CodeUri: ./dist/gql/preprocessPostItem.js
+        createPostItem:
+          Runtime:
+            Name: APPSYNC_JS
+            Version: 1.0.0
+          DataSource: Posts
+          CodeUri: ./dist/gql/createPostItem.js
+        getPostFromTable:
+          Runtime:
+            Name: APPSYNC_JS
+            Version: 1.0.0
+          DataSource: Posts
+          CodeUri: ./dist/gql/getPostFromTable.js
+        getAlbumsByArtist:
+          Runtime:
+            Name: APPSYNC_JS
+            Version: 1.0.0
+          DataSource: Posts
+          CodeUri: ./dist/gql/getAlbumsByArtist.js
+        greet:
+          Runtime:
+            Name: APPSYNC_JS
+            Version: 1.0.0
+          DataSource: MusicCatalogue
+          CodeUri: ./dist/gql/greet.js
+      Resolvers:
+        Mutation:
+          addAlbum:
+            Runtime:
+              Name: APPSYNC_JS
+              Version: 1.0.0
+            Pipeline:
+            - preprocessPostItem
+            - createPostItem
+        Query:
+          getAlbum:
+            Runtime:
+              Name: APPSYNC_JS
+              Version: 1.0.0
+            Pipeline:
+            - getPostFromTable
+          getAlbumsByArtist:
+            Runtime:
+              Name: APPSYNC_JS
+              Version: 1.0.0
+            Pipeline:
+            - getAlbumsByArtist
+          sayHello:
+            Runtime:
+              Name: APPSYNC_JS
+              Version: 1.0.0
+            Pipeline:
+            - greet
+          sayGoodbye:
+            Runtime:
+              Name: APPSYNC_JS
+              Version: 1.0.0
+            Pipeline:
+            - greet
+
+
+Outputs:
+  MusicCatalogueGraphQLApi:
+    Description: MusicCatalogueGraphQLApi endpoint URL for Prod environment
+    Value: !GetAtt MusicCatalogueGraphQLApi.GraphQLUrl
+  MusicCatalogueGraphQLApiMyApiKey:
+    Description: API Key for MusicCatalogueGraphQLApi
+    Value: !GetAtt MusicCatalogueGraphQLApiMyApiKey.ApiKey
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    LoggingConfig:
+      LogFormat: JSON
