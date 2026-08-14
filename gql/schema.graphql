@@ -11,7 +11,7 @@ type Query {
 }
 
 type Mutation {
-  addAlbum(artist: String!, title: String!, mediaType: String!): Album!
+  addAlbum(artist: String!, title: String!, mediaType: String!, condition: String): Album!
 }
 
 type Album {
