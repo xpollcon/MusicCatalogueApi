@@ -6,19 +6,31 @@ schema {
 type Query {
   getAlbum(id: String!): Album
   getAlbumsByArtist(artist: String!): [Album!]!
+  listAllAlbums: [Album!]!
   sayHello(name: String): String
   sayGoodbye(name: String): String
 }
 
 type Mutation {
-  addAlbum(artist: String!, title: String!, mediaType: String!, condition: String): Album!
+  addAlbum(artist: String!, title: String!, mediaType: MediaType!, condition: String): Album!
+  updateAlbum(id: String!, artist: String!, title: String!, mediaType: MediaType!, condition: String): Album!
+  deleteAlbum(id: String!): Boolean!
 }
 
 type Album {
   id: String!
   artist: String!
   title: String!
-  mediaType: String!
+  mediaType: MediaType!
   condition: String
+  username: String
 
+}
+
+enum MediaType {
+  LP
+  CD
+  CASSETTE
+  OTHER
+  BOX_SET
 }

@@ -58,6 +58,24 @@ Resources:
             Version: 1.0.0
           DataSource: Posts
           CodeUri: ./dist/gql/getAlbumsByArtist.js
+        listAllAlbums:
+          Runtime:
+            Name: APPSYNC_JS
+            Version: 1.0.0
+          DataSource: Posts
+          CodeUri: ./dist/gql/listAllAlbums.js
+        updateAlbumItem:
+          Runtime:
+            Name: APPSYNC_JS
+            Version: 1.0.0
+          DataSource: Posts
+          CodeUri: ./dist/gql/updateAlbumItem.js
+        deleteAlbumItem:
+          Runtime:
+            Name: APPSYNC_JS
+            Version: 1.0.0
+          DataSource: Posts
+          CodeUri: ./dist/gql/deleteAlbumItem.js
         greet:
           Runtime:
             Name: APPSYNC_JS
@@ -73,6 +91,18 @@ Resources:
             Pipeline:
             - preprocessPostItem
             - createPostItem
+          updateAlbum:
+            Runtime:
+              Name: APPSYNC_JS
+              Version: 1.0.0
+            Pipeline:
+            - updateAlbumItem
+          deleteAlbum:
+            Runtime:
+              Name: APPSYNC_JS
+              Version: 1.0.0
+            Pipeline:
+            - deleteAlbumItem
         Query:
           getAlbum:
             Runtime:
@@ -86,6 +116,12 @@ Resources:
               Version: 1.0.0
             Pipeline:
             - getAlbumsByArtist
+          listAllAlbums:
+            Runtime:
+              Name: APPSYNC_JS
+              Version: 1.0.0
+            Pipeline:
+            - listAllAlbums
           sayHello:
             Runtime:
               Name: APPSYNC_JS
