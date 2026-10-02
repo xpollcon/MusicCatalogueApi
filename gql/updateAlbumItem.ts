@@ -15,6 +15,25 @@ export function request(ctx: AppSyncContext) {
     expression += ", #condition = :condition";
   }
 
+  // Set by lookupCoverArt when it ran. Missing fields are removed so a cover for the
+  // album's old artist/title is not kept.
+  const coverArt = ctx.stash.coverArt;
+  const removes: string[] = [];
+  if (coverArt) {
+    for (const field of ["musicBrainzId", "coverArtUrl"]) {
+      names["#" + field] = field;
+      if (coverArt[field]) {
+        values[":" + field] = coverArt[field];
+        expression += `, #${field} = :${field}`;
+      } else {
+        removes.push("#" + field);
+      }
+    }
+  }
+  if (removes.length > 0) {
+    expression += " REMOVE " + removes.join(", ");
+  }
+
   return {
     operation: "UpdateItem",
     key: util.dynamodb.toMapValues({ id }),

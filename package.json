@@ -20,6 +20,6 @@
     "build": "tsc",
     "clean": "rm -rf dist",
     "predeploy": "npm run build",
-    "test": "mocha -r ts-node/register 'greeter/tests/unit/**/*.ts'"
+    "test": "mocha --import=tsx 'greeter/tests/unit/**/*.ts' 'coverart/tests/unit/**/*.ts'"
   }
 }

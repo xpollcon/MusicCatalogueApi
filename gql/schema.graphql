@@ -12,9 +12,11 @@ type Query {
 }
 
 type Mutation {
-  addAlbum(artist: String!, title: String!, mediaType: MediaType!, condition: String): Album!
-  updateAlbum(id: String!, artist: String!, title: String!, mediaType: MediaType!, condition: String): Album!
+  addAlbum(artist: String!, title: String!, mediaType: MediaType!, condition: String, musicBrainzId: String): Album!
+  updateAlbum(id: String!, artist: String!, title: String!, mediaType: MediaType!, condition: String, musicBrainzId: String): Album!
   deleteAlbum(id: String!): Boolean!
+  "Looks the cover up again. Pass musicBrainzId (a release group ID) to fix a wrong match."
+  refreshCoverArt(id: String!, musicBrainzId: String): Album!
 }
 
 type Album {
@@ -24,7 +26,10 @@ type Album {
   mediaType: MediaType!
   condition: String
   username: String
-
+  "MusicBrainz release group ID the cover was matched to."
+  musicBrainzId: String
+  "Front cover (500px) from the Cover Art Archive."
+  coverArtUrl: String
 }
 
 enum MediaType {
