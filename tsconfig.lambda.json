@@ -1,0 +1,10 @@
+{
+  // Lambda functions are compiled as CommonJS: the Node.js runtime loads a plain
+  // app.js as CommonJS, so ES module output fails with "Unexpected token 'export'".
+  // The AppSync resolvers (tsconfig.json) must stay ES modules.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS"
+  },
+  "include": ["greeter/**/*.ts", "coverart/**/*.ts"]
+}
