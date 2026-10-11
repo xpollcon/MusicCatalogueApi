@@ -13,5 +13,5 @@
     "strict": false,
     "downlevelIteration": true
   },
-  "include": ["gql/**/*.ts","greeter/**/*.ts","coverart/**/*.ts"]
+  "include": ["gql/**/*.ts"]
 }

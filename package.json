@@ -17,7 +17,7 @@
     "typescript": "^5.0.0"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc -p tsconfig.lambda.json",
     "clean": "rm -rf dist",
     "predeploy": "npm run build",
     "test": "mocha --import=tsx 'greeter/tests/unit/**/*.ts' 'coverart/tests/unit/**/*.ts'"

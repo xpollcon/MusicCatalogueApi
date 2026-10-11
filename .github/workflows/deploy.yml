@@ -22,6 +22,17 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      # Load each built Lambda the way the Lambda runtime does (no ES module detection),
+      # so a handler that would crash with "Unexpected token 'export'" fails here instead.
+      - name: Check Lambda handlers load
+        run: |
+          for fn in greeter coverart; do
+            node --no-experimental-detect-module -e "
+              import('./dist/$fn/app.js').then(m => {
+                if (typeof (m.lambdaHandler ?? m.default?.lambdaHandler) !== 'function') throw new Error('no lambdaHandler');
+                console.log('$fn: ok');
+              })"
+          done
 
   deploy:
     needs: test
