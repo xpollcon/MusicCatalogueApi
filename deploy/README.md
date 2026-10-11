@@ -44,5 +44,8 @@ GitHub signs in to AWS with OpenID Connect, so no AWS keys are stored in GitHub.
 - The pipeline deploys with the template's default parameters. If you deployed locally with
   `--parameter-overrides` (e.g. `MusicBrainzContact`), the next pipeline deploy resets them to the
   defaults; change the default in `template.yaml` instead.
+- The stack doesn't output the API key: the key CloudFormation created has expired and been
+  replaced by hand, so reading it back failed every deploy. Manage keys in the AppSync console
+  (Settings → API keys), and remember they expire after at most 365 days.
 - If a deploy fails with `AccessDenied`, the error names the missing permission. Add it to
   `deploy/github-deploy-role.yaml` and redeploy that stack (step 1).
