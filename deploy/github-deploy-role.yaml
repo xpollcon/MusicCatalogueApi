@@ -1,0 +1,129 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  IAM role that GitHub Actions assumes (via OIDC) to deploy the music-catalogue-api
+  stack. Deploy once by hand; see deploy/README.md.
+
+Parameters:
+  GitHubRepo:
+    Type: String
+    Default: xpollcon/MusicCatalogueApi
+    Description: owner/repo allowed to assume the role
+  GitHubBranch:
+    Type: String
+    Default: main
+    Description: Only workflows running on this branch can assume the role
+  StackName:
+    Type: String
+    Default: music-catalogue-api
+    Description: Name of the application stack the role may deploy
+  ExistingOidcProviderArn:
+    Type: String
+    Default: ''
+    Description: >
+      ARN of an existing token.actions.githubusercontent.com OIDC provider. An AWS account
+      can only have one, so pass its ARN if you already created one; leave empty to create it.
+
+Conditions:
+  CreateOidcProvider: !Equals [!Ref ExistingOidcProviderArn, '']
+
+Resources:
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: CreateOidcProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      ThumbprintList:
+        - 6938fd4d98bab03faadb97b34396831e3780aea1
+        - 1c58a3a8518e8759bf075b76b750d4f2df264fcd
+
+  DeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: !Sub Deploys ${StackName} from GitHub Actions (${GitHubRepo}@${GitHubBranch})
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !If
+                - CreateOidcProvider
+                - !Ref GitHubOidcProvider
+                - !Ref ExistingOidcProviderArn
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubRepo}:ref:refs/heads/${GitHubBranch}
+      Policies:
+        - PolicyName: deploy-sam-stack
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              # CloudFormation: the app stack, SAM's managed bucket stack, and the SAM transform.
+              - Effect: Allow
+                Action: cloudformation:*
+                Resource:
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${StackName}/*
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/aws-sam-cli-managed-default/*
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:aws:transform/Serverless-2016-10-31
+              - Effect: Allow
+                Action:
+                  - cloudformation:ValidateTemplate
+                  - cloudformation:GetTemplateSummary
+                  - cloudformation:ListStacks
+                Resource: '*'
+
+              # Upload build artifacts to SAM's managed bucket (created by `sam deploy --resolve-s3`).
+              - Effect: Allow
+                Action:
+                  - s3:CreateBucket
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                  - s3:GetBucketLocation
+                  - s3:PutBucketPolicy
+                  - s3:GetBucketPolicy
+                  - s3:PutBucketVersioning
+                  - s3:PutBucketTagging
+                  - s3:PutEncryptionConfiguration
+                  - s3:PutBucketPublicAccessBlock
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::aws-sam-cli-managed-default-samclisourcebucket-*
+                  - !Sub arn:${AWS::Partition}:s3:::aws-sam-cli-managed-default-samclisourcebucket-*/*
+
+              # Resources the stack itself creates. CloudFormation names them "<stack>-<id>-<suffix>".
+              - Effect: Allow
+                Action: lambda:*
+                Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${StackName}-*
+              - Effect: Allow
+                Action: dynamodb:*
+                Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${StackName}-*
+              - Effect: Allow
+                Action: appsync:*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - iam:CreateRole
+                  - iam:DeleteRole
+                  - iam:GetRole
+                  - iam:PassRole
+                  - iam:UpdateRole
+                  - iam:UpdateAssumeRolePolicy
+                  - iam:TagRole
+                  - iam:UntagRole
+                  - iam:AttachRolePolicy
+                  - iam:DetachRolePolicy
+                  - iam:PutRolePolicy
+                  - iam:GetRolePolicy
+                  - iam:DeleteRolePolicy
+                  - iam:ListRolePolicies
+                  - iam:ListAttachedRolePolicies
+                Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${StackName}-*
+
+Outputs:
+  DeployRoleArn:
+    Description: Set this as the AWS_DEPLOY_ROLE_ARN repository variable in GitHub
+    Value: !GetAtt DeployRole.Arn
